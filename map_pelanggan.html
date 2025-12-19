@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Peta Pelanggan PLN</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+<style>
+html, body { margin:0; padding:0; height:100%; }
+#map { width:100%; height:100vh; }
+.legend {
+  background:white;
+  padding:8px;
+  font-size:12px;
+}
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+var map = L.map('map').setView([-7.189, 112.28], 13);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap'
+}).addTo(map);
+
+// Warna berdasarkan HARI BACA
+function warnaHari(hari) {
+  if (hari == 'A') return 'red';
+  if (hari == 'B') return 'blue';
+  if (hari == 'C') return 'green';
+  return 'orange';
+}
+
+fetch('pelanggan_pln.geojson')
+.then(res => res.json())
+.then(data => {
+  L.geoJSON(data, {
+    pointToLayer: function(feature, latlng) {
+      return L.circleMarker(latlng, {
+        radius: 6,
+        fillColor: warnaHari(feature.properties["HARI BACA"]),
+        color: '#000',
+        weight: 1,
+        fillOpacity: 0.8
+      });
+    },
+    onEachFeature: function (feature, layer) {
+      let p = feature.properties;
+
+      let popup = `
+        <b>IDPEL:</b> ${p.IDPEL}<br>
+        <b>Nama:</b> ${p.NAMA}<br>
+        <b>Hari Baca:</b> ${p["HARI BACA"]}<br>
+        <b>Alamat:</b> ${p.ALAMAT}<br>
+        <b>Daya:</b> ${p.DAYA} VA<br>
+        <b>Gardu:</b> ${p.GARDU}<br><br>
+        <a target="_blank"
+        href="https://www.google.com/maps/dir/?api=1&destination=${feature.geometry.coordinates[1]},${feature.geometry.coordinates[0]}">
+        🧭 Rute ke lokasi
+        </a>
+      `;
+
+      layer.bindPopup(popup);
+    }
+  }).addTo(map);
+});
+</script>
+
+</body>
+</html>
